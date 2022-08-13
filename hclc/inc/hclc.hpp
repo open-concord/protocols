@@ -45,6 +45,6 @@ private:
   };
   void Key_Exchange();   
 public:
-  void Handle(Conn*) override; 
+  void Handle(Conn*); 
   hclc(std::string ct) : chain_trip(ct) {}
 };
