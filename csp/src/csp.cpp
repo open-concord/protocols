@@ -6,7 +6,7 @@
 struct sockaddr_in csp::_form(int port) {
   struct sockaddr_in _peer;
 
-  int _peerfd = socket(this->cfamily, SOCK_STREAM, 0);
+  int _peerfd = socket(AF_INET, SOCK_STREAM, 0);
   if (_peerfd < 0) {
     throw std::logic_error("[CSP::FORM] COULD NOT CREATE SOCKET");
   }
@@ -20,32 +20,6 @@ struct sockaddr_in csp::_form(int port) {
   return _peer;
 }
 
-void csp::target(tf_struct target) {
-  struct hostent* s;
-
-  s = gethostbyname(target.addr.c_str());
-  if (s == NULL) {
-    throw std::logic_error("[CSP::TARGET] COULD NOT FIND PEER's ADDR");
-  }
-  struct sockaddr_in _peer = this->_form(target.port);
-
-  bcopy(
-    (char*)s->h_addr,
-    (char*)&_peer.sin_addr.s_addr,
-    s->h_length
-  );
-
-  if (connect(
-    this->sockfd,
-    (struct sockaddr*) &_peer,
-    (socklen_t) sizeof(_peer)
-  ) < 0) {
-    throw std::logic_error("[CSP::TARGET] COULD NOT CONNECT");
-  };
-  /** TODO: store _peer */
-  this->self = _peer;
-}
-
 void csp::queue(int origin_fd) {
   struct sockaddr_in _in;
   socklen_t _inlen = sizeof(_in);
@@ -54,7 +28,7 @@ void csp::queue(int origin_fd) {
     throw std::logic_error("[CSP::QUEUE] COULD NOT ACCEPT");
   } else {
     this->sockfd = fd;
-    this->self = _in;
+    this->_peer = _in;
   }
 }
 
@@ -66,7 +40,7 @@ void csp::port(unsigned short int port) {
   }
 
   /** TODO: store _info */
-  this->self = _info;
+  this->_peer = _info;
 }
 
 int csp::fd() {return this->sockfd;}
@@ -113,3 +87,30 @@ void csp::writeb(std::string m) {
 
 /** close (no status) */
 void csp::closeb() {shutdown(this->sockfd, 2);}
+
+csp::csp(target_format target) {
+  struct hostent* s;
+
+  s = gethostbyname(target.addr.c_str());
+  if (s == NULL) {
+    throw std::logic_error("[CSP::TARGET] COULD NOT FIND PEER's ADDR");
+  }
+  struct sockaddr_in _peer = this->_form(target.port);
+
+  bcopy(
+    (char*)s->h_addr,
+    (char*)&_peer.sin_addr.s_addr,
+    s->h_length
+  );
+
+  if (connect(
+    this->sockfd,
+    (struct sockaddr*) &_peer,
+    (socklen_t) sizeof(_peer)
+  ) < 0) {
+    throw std::logic_error("[CSP::TARGET] COULD NOT CONNECT");
+  };
+  /** TODO: store _peer */
+  this->_peer = _peer;
+}
+

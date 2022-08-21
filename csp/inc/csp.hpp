@@ -18,14 +18,15 @@
 
 
 struct csp : public virtual np {
+private:
   struct sockaddr_in _form(int port);
-  
-  struct tf_struct {
+  struct sockaddr_in _peer;
+public: 
+  struct target_format {
     std::string addr;
     unsigned int port;
   };
 
-  void target(tf_struct target) override;
   void queue(int origin_fd) override;
   void port(unsigned short int port) override;
   int fd() override;
@@ -36,5 +37,6 @@ struct csp : public virtual np {
   void writeb(std::string m) override;
   /** close (no status) */
   void closeb() override;
+  csp(target_format target = {});
   ~csp() {}
 };
